@@ -24,111 +24,87 @@ const linkCount = document.querySelector("#linkCount");
 let links = []
 
 function renderLink(links) {
-  
-  //Clear linksTable.innerHTML
-  
   linksTable.innerHTML = "";
   
-  // if Links is empty show empty state and update link count to 0
-  
-  if (links.length = 0 ) {
-    linkCount= "0 links"
-    emptyState.classList.remove("hidden")
-    
-    return 
-    
-  } else {
-    emptyState.classList.add("hidden")
+  if (links.length === 0) {
+    linkCount.textContent = "0 links";
+    emptyState.classList.remove("hidden");
+    return;
   }
   
-  links.forEach( (link) => {
+  emptyState.classList.add("hidden");
+  linkCount.textContent = `${links.length} links`;
+  
+  links.forEach((link) => {
     const linkdiv = document.createElement("div");
     linkdiv.className = "link-row";
     
-    
     linkdiv.innerHTML = `
-     <div class = "link-left"> <span class = "link-short"   >${link.code}</span>
-        <span class = "link-original">${link.url}</span>
+      <div class="link-left">
+        <span class="link-short">${link.code}</span>
+        <span class="link-original">${link.url}</span>
       </div>
-      <div class = "link-right">
-        <span class = "link-clicks">${link.clicks}</span>
-        <button class = "btn-delete-row"> Delete </button>
-        
+      <div class="link-right">
+        <span class="link-clicks">${link.clicks} clicks</span>
+        <button class="btn-delete-row">Delete</button>
       </div>
-      `;
-      
-      linksTable.appendChild(linkdiv);
+    `;
+    
+    linksTable.appendChild(linkdiv);
+    
+    const deleteBtn = linkdiv.querySelector(".btn-delete-row");
+    deleteBtn.addEventListener("click", async () => {
+      await fetch(`http://127.0.0.1:3000/links/${link.id}`, {
+        method: "DELETE"
+      });
+      fetchLinks();
+    });
   });
 }
-
-//use fetch to fetch links
 
 async function fetchLinks() {
   try {
-    const response = await fetch("http://localhost:3000/links");
+    const response = await fetch("http://127.0.0.1:3000/links");
     const data = await response.json();
-    renderLink(data)
+    renderLink(data);
   } catch (err) {
-     console.log(err);
+    console.log(err);
   }
 }
 
-//the shortebtn event listener 
-
 btnShorten.addEventListener("click", async () => {
+  const url = urlInput.value;
   
-  //get value from url input 
-  
-  const url = urlInput.value 
-  
-  if (url= "" || !url.startwith("http")) {
+  if (url === "" || !url.startsWith("http")) {
     errorMsg.classList.remove("hidden");
-    return; 
-  } 
-  errorMsg.classList.add("hidden")
+    return;
+  }
   
-  try{
-  fetch("http://localhost:3000/links", {
-    method:"Post",
-    headers: {"Content-type" : "application/json"},
-    body:JSON.stringify({url})
+  errorMsg.classList.add("hidden");
+  
+  try {
+    const response = await fetch("http://127.0.0.1:3000/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url })
     });
     
     const data = await response.json();
-     resultCard.classList.remove("hidden");
-   shortUrl.textContent = `http;//localhost:3000/${data.code}`;
-  originalUrl.textContent = data.u;
-  
-  fetchLinks()
-  
+    resultCard.classList.remove("hidden");
+    shortUrl.textContent = `http://127.0.0.1:3000/${data.code}`;
+    originalUrl.textContent = data.url;
+    fetchLinks();
   } catch (err) {
-    console.log(err)
+    console.log(err);
   }
-  
 });
-
-//copy links 
-
 
 btnCopy.addEventListener("click", () => {
-  
-  navigator.clipboard.writetext(shortUrl.textContent)
-  btnCopy.textContent = "Copied"
-  
-  setTimeout(()=>{
-    btnCopy.textContent = "copy";
+  navigator.clipboard.writeText(shortUrl.textContent);
+  btnCopy.textContent = "Copied!";
+  setTimeout(() => {
+    btnCopy.textContent = "Copy";
   }, 2000);
-})
-
-
-const deletebtn = linkdiv.querySelector(".btn-delete-row");
-
-deletebtn.addEventListener("click", async() => {
-  
-  await fetch(`http://localhost:3000/links/${link.id}`,{
-    method: "Delete"
-  });
-  fetchLinks();
 });
 
-fetchLinks()
+fetchLinks();
